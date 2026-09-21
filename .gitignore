@@ -1,0 +1,18 @@
+# Python environment and caches
+.venv/
+__pycache__/
+.ruff_cache/
+
+# Editor and OS
+.idea/
+.DS_Store
+.claude/settings.local.json
+
+# Built output — its own git repo, published separately
+publish/
+
+# Downloaded iNaturalist data — regenerate with: python3 inat_download.py <username>
+observer_*/
+
+# Stale generated artifact
+inat_tree.html
