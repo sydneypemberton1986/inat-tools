@@ -38,7 +38,17 @@ map.createPane('gridPane');
 map.getPane('gridPane')!.style.zIndex = '350';
 map.getPane('gridPane')!.style.pointerEvents = 'none';
 
+// One native-zoom level coarser, drawn just beneath the main grid so each fine
+// cell sits inside the shadow of the larger cell it belongs to.
+map.createPane('gridShadowPane');
+map.getPane('gridShadowPane')!.style.zIndex = '340';
+map.getPane('gridShadowPane')!.style.pointerEvents = 'none';
+
 let iNatGridLayer: ReturnType<typeof L.tileLayer> | null = null;
+let iNatShadowLayer: ReturnType<typeof L.tileLayer> | null = null;
+
+// How pale the coarser shadow grid reads relative to the main grid.
+const SHADOW_OPACITY = 0.15;
 
 function renderGrid(): void {
     const username = (document.getElementById('observer') as HTMLInputElement).value.trim();
@@ -46,12 +56,30 @@ function renderGrid(): void {
 
     if (!username) return;
 
-    // Remove previous grid layer if it exists
+    // Remove previous grid layers if they exist
     if (iNatGridLayer !== null) {
         map.removeLayer(iNatGridLayer);
     }
+    if (iNatShadowLayer !== null) {
+        map.removeLayer(iNatShadowLayer);
+        iNatShadowLayer = null;
+    }
 
     const apiUrl = `https://api.inaturalist.org/v1/grid/{z}/{x}/{y}.png?user_login=${encodeURIComponent(username)}&color=red`;
+
+    // The coarser grid one level down, drawn very pale in the lower pane so it
+    // shows through beneath the main grid. Skipped once there is no coarser level.
+    const shadowZoom = nativeZoom - 1;
+    if (shadowZoom >= 0) {
+        iNatShadowLayer = L.tileLayer(apiUrl, {
+            pane: 'gridShadowPane',       // below the main grid
+            minNativeZoom: shadowZoom,
+            maxNativeZoom: shadowZoom,
+            maxZoom: 18,
+            opacity: SHADOW_OPACITY,
+            attribution: '&copy; <a href="https://www.inaturalist.org">iNaturalist</a>'
+        }).addTo(map);
+    }
 
     // Lock grid to the slider's specified native zoom level
     iNatGridLayer = L.tileLayer(apiUrl, {
