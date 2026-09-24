@@ -3,6 +3,10 @@
 __pycache__/
 .ruff_cache/
 
+# Node / pnpm
+node_modules/
+dist/
+
 # Editor and OS
 .idea/
 .DS_Store

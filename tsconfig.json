@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    // The module targets both the browser and Node 18+, so pull in DOM
+    // globals (fetch, Response, setTimeout) alongside modern ES.
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+
+    // Emit a compiled module plus type declarations into dist/.
+    "outDir": "dist",
+    "declaration": true,
+    "sourceMap": true,
+
+    "strict": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  // Typecheck the facade and every viewer entry under one strict config.
+  // Emit is handled elsewhere: the facade by tsconfig.facade.json, the viewers
+  // by esbuild (build.mjs). This config is only ever run with --noEmit.
+  "include": ["inat_api.ts", "src/**/*.ts"]
+}

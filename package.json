@@ -1,0 +1,28 @@
+{
+  "name": "inat-viewer",
+  "version": "0.1.0",
+  "description": "Typed facade over the iNaturalist API, plus the static observation viewers.",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "main": "dist/inat_api.js",
+  "types": "dist/inat_api.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pnpm run build:facade && pnpm run build:viewers",
+    "build:facade": "tsc -p tsconfig.facade.json",
+    "build:viewers": "node build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist",
+    "download": "python3 inat_download.py",
+    "render": "python3 render_tree.py",
+    "deploy": "./deploy.sh"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.12",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.2"
+  }
+}

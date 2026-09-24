@@ -1,0 +1,7 @@
+{
+  // Emit-only config for the published package: compiles the typed facade to
+  // dist/inat_api.js plus its .d.ts (the package `main`/`types`). The viewers
+  // are bundled separately by esbuild, so they are excluded here.
+  "extends": "./tsconfig.json",
+  "include": ["inat_api.ts"]
+}
