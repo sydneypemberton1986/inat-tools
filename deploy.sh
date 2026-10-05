@@ -25,6 +25,7 @@ echo "==> Rendering tree + missed pages into publish/..."
 python3 render_tree.py "${user}" -o publish/tree.html
 
 echo "==> Copying static pages into publish/..."
+cp shared.css publish/shared.css
 cp index.html publish/index.html
 cp grid_viewer.html publish/grid_viewer.html
 cp rarest.html publish/rarest.html

@@ -4,41 +4,39 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rarest Observations</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+    <link rel="stylesheet" href="shared.css">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-               margin: 2rem; color: #1b1b1b; line-height: 1.5; }
+        body { margin: 2rem; }
         h1 { font-size: 1.3rem; margin: 0 0 .25rem; }
-        .summary-line { color: #6b6b6b; font-size: .85rem; margin-bottom: 1rem; }
-        .page-nav { font-size: .85rem; margin-bottom: 1rem; }
-        .page-nav a { color: #14542f; font-weight: 600; text-decoration: none; margin-right: 1rem; }
-        .page-nav a:hover { text-decoration: underline; }
+        .summary-line { color: var(--muted); font-size: .85rem; margin-bottom: 1rem; }
         /* Controls: pick observer, how many to show, sort direction. */
         .filters { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; align-items: center;
-                   margin: .5rem 0 1rem; padding: .55rem .75rem; background: #f4f6f4;
-                   border: 1px solid #e0e4e0; border-radius: 6px; font-size: .85rem; }
-        .filters label { display: inline-flex; align-items: center; gap: .35rem; color: #333; }
+                   margin: .5rem 0 1rem; padding: .55rem .75rem; background: var(--bg-soft);
+                   border: 1px solid var(--border); border-radius: 6px; font-size: .85rem; }
+        .filters label { display: inline-flex; align-items: center; gap: .35rem; color: var(--ink); }
         .filters input, .filters select { font: inherit; padding: .1rem .35rem; }
         .filters button { font: inherit; padding: .15rem .6rem; cursor: pointer; }
-        #status { color: #6b6b6b; margin-left: auto; }
+        #status { color: var(--muted); margin-left: auto; }
         /* Ranked list of taxa, rarest globally first. */
         ol.rare-list { list-style: none; margin: 0; padding: 0; }
         li.rare-item { display: flex; align-items: center; gap: .7rem; padding: .4rem .3rem;
-                       border-bottom: 1px solid #eee; }
-        li.rare-item:hover { background: #eef2ee; }
+                       border-bottom: 1px solid var(--border); }
+        li.rare-item:hover { background: var(--row-hover); }
         .rank-num { width: 2.2rem; text-align: right; color: #9a7b4f; font-weight: 700;
                     font-size: .9rem; flex: none; }
         .thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 4px;
-                 background: #f0f0f0; flex: none; }
+                 background: var(--thumb-bg); flex: none; }
         .rare-main { display: flex; flex-direction: column; min-width: 0; }
-        a.rare-link { color: #14542f; text-decoration: none; font-weight: 600; }
+        a.rare-link { color: var(--accent); text-decoration: none; font-weight: 600; }
         a.rare-link:hover { text-decoration: underline; }
-        .sci { color: #6b6b6b; font-style: italic; font-size: .85em; }
-        .rank-label { color: #6b6b6b; font-size: .78em; font-style: italic; margin-left: .4rem; }
-        .obs-meta { color: #8a8a8a; font-size: .78em; }
+        .sci { color: var(--muted); font-style: italic; font-size: .85em; }
+        .rank-label { color: var(--muted); font-size: .78em; font-style: italic; margin-left: .4rem; }
+        .obs-meta { color: var(--faint); font-size: .78em; }
         .metrics { margin-left: auto; text-align: right; flex: none; white-space: nowrap;
                    display: flex; flex-direction: column; align-items: flex-end; gap: .15rem; }
         .global { font-weight: 700; color: #b06a2c; }
-        .global-label { color: #6b6b6b; font-size: .78em; }
+        .global-label { color: var(--muted); font-size: .78em; }
         /* Validation status: research grade = community-validated; the rest aren't. */
         .badge { font-size: .7em; font-weight: 600; padding: .05rem .4rem; border-radius: .7rem;
                  white-space: nowrap; }

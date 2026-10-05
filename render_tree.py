@@ -111,48 +111,45 @@ _PAGE_TEMPLATE = """<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+<link rel="stylesheet" href="shared.css">
 <style>
-  body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-         margin: 2rem; color: #1b1b1b; line-height: 1.5; }}
+  body {{ margin: 2rem; }}
   h1 {{ font-size: 1.3rem; margin: 0 0 .25rem; }}
-  .summary-line {{ color: #6b6b6b; font-size: .85rem; margin-bottom: 1rem; }}
-  .page-nav {{ font-size: .85rem; margin-bottom: 1rem; }}
-  .page-nav a {{ color: #14542f; font-weight: 600; text-decoration: none; margin-right: 1rem; }}
-  .page-nav a:hover {{ text-decoration: underline; }}
-  .page-nav .current {{ color: #1b1b1b; font-weight: 600; margin-right: 1rem; }}
+  .summary-line {{ color: var(--muted); font-size: .85rem; margin-bottom: 1rem; }}
   .controls button {{ font: inherit; margin-right: .5rem; padding: .2rem .6rem; cursor: pointer; }}
   .tree {{ margin-top: 1rem; }}
   summary {{ cursor: pointer; padding: 1px 5px; border-radius: 4px; }}
   /* Leaves have no disclosure triangle; pad them to align with sibling summaries. */
   .leaf {{ padding: 1px 5px 1px 1.15rem; border-radius: 4px; }}
   /* Row-level hover ties a wide line together from name across to the count. */
-  summary:hover, .leaf:hover, .obs:hover {{ background: #eef2ee; }}
+  summary:hover, .leaf:hover, .obs:hover {{ background: var(--row-hover); }}
   /* Each nesting level draws a faint vertical guide rail. Hovering a node lights
      up the rails along its whole ancestry (every ancestor <details> is :hover),
      so a deeply indented row can be traced straight back to the root. */
-  .children {{ margin-left: .55rem; padding-left: .95rem; border-left: 1px solid #e4e6e4; }}
-  details:hover > .children {{ border-left-color: #8fbf8f; }}
-  a.taxon {{ text-decoration: none; color: #14542f; font-weight: 600; }}
+  .children {{ margin-left: .55rem; padding-left: .95rem; border-left: 1px solid var(--border); }}
+  details:hover > .children {{ border-left-color: var(--accent-soft); }}
+  a.taxon {{ text-decoration: none; color: var(--accent); font-weight: 600; }}
   a.taxon:hover {{ text-decoration: underline; }}
   /* Collapsed-chain crumbs are de-emphasized so the terminus taxon stands out. */
   a.crumb {{ text-decoration: none; color: #4a7a5a; font-weight: 400; }}
   a.crumb:hover {{ text-decoration: underline; }}
   .chain-sep {{ color: #b0b8b0; }}
-  .rank {{ color: #6b6b6b; font-size: .8em; font-style: italic; margin-left: .4rem; }}
-  .common {{ color: #333; margin-left: .4rem; }}
-  .count {{ color: #6b6b6b; font-size: .8em; margin-left: .4rem; }}
+  .rank {{ color: var(--muted); font-size: .8em; font-style: italic; margin-left: .4rem; }}
+  .common {{ color: var(--ink); margin-left: .4rem; }}
+  .count {{ color: var(--muted); font-size: .8em; margin-left: .4rem; }}
   a.count {{ text-decoration: none; }}
   a.count:hover {{ text-decoration: underline; }}
   /* Individual observations, aligned with sibling taxa inside the guide rail.
      Flex keeps the thumbnail, date, and place on one vertically-centered line. */
   .obs {{ padding: 2px 5px 2px 1.15rem; font-size: .9em; border-radius: 4px;
          display: flex; align-items: center; gap: .5rem; }}
-  a.obs-link {{ color: #14542f; text-decoration: none; display: inline-flex;
+  a.obs-link {{ color: var(--accent); text-decoration: none; display: inline-flex;
                align-items: center; gap: .5rem; }}
   a.obs-link:hover {{ text-decoration: underline; }}
   .obs-thumb {{ width: 64px; height: 64px; object-fit: cover; border-radius: 3px;
-               background: #f0f0f0; }}
-  .place {{ color: #6b6b6b; font-size: .85em; }}
+               background: var(--thumb-bg); }}
+  .place {{ color: var(--muted); font-size: .85em; }}
   /* Status chips. Color reinforces, but the label carries the meaning so the
      page needs no legend and does not lean on color alone. */
   .chip {{ font-size: .68em; font-weight: 600; padding: .05rem .4rem; border-radius: .7rem;
@@ -163,12 +160,12 @@ _PAGE_TEMPLATE = """<!DOCTYPE html>
   /* Filter bar. Each control narrows which observation rows stay visible; the
      tree then hides any taxon left with nothing under it. */
   .filters {{ display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; align-items: center;
-             margin: .5rem 0 1rem; padding: .55rem .75rem; background: #f4f6f4;
-             border: 1px solid #e0e4e0; border-radius: 6px; font-size: .85rem; }}
-  .filters label {{ display: inline-flex; align-items: center; gap: .35rem; color: #333; }}
+             margin: .5rem 0 1rem; padding: .55rem .75rem; background: var(--bg-soft);
+             border: 1px solid var(--border); border-radius: 6px; font-size: .85rem; }}
+  .filters label {{ display: inline-flex; align-items: center; gap: .35rem; color: var(--ink); }}
   .filters select {{ font: inherit; padding: .1rem .25rem; }}
   .filters button {{ font: inherit; padding: .15rem .55rem; cursor: pointer; }}
-  #match-count {{ color: #6b6b6b; margin-left: auto; }}
+  #match-count {{ color: var(--muted); margin-left: auto; }}
   /* Rows a filter has ruled out; hidden but left in the DOM so clearing restores them. */
   .filtered {{ display: none !important; }}
   /* Coverage panels: most-observed species near you, marking what you have. */
@@ -177,11 +174,11 @@ _PAGE_TEMPLATE = """<!DOCTYPE html>
   details.coverage > summary {{ font-weight: 600; color: #7a4712; }}
   /* Intro + geolocate control for the blind-spots panel. It fills in from the
      live API on demand, so it starts as just a button and a status line. */
-  .bs-intro {{ font-size: .82rem; color: #6b6b6b; margin: .4rem 0 .6rem; max-width: 44rem; }}
+  .bs-intro {{ font-size: .82rem; color: var(--muted); margin: .4rem 0 .6rem; max-width: 44rem; }}
   #blind-spots button {{ font: inherit; padding: .25rem .7rem; cursor: pointer;
                         border: 1px solid #d8b98a; background: #fff; border-radius: 5px; }}
   #blind-spots button:disabled {{ opacity: .55; cursor: default; }}
-  .bs-status {{ font-size: .82rem; color: #6b6b6b; margin-left: .6rem; }}
+  .bs-status {{ font-size: .82rem; color: var(--muted); margin-left: .6rem; }}
   #bs-results {{ margin-top: .5rem; }}
   .bs-state h2 {{ font-size: 1rem; margin: .6rem 0 .2rem; padding-bottom: .1rem;
                  border-bottom: 1px solid #ead9bf; }}
@@ -190,19 +187,19 @@ _PAGE_TEMPLATE = """<!DOCTYPE html>
   .bs-have {{ color: #6aa06a; }}
   .bs-missing {{ color: #b06a2c; }}
   .bs-item-have {{ opacity: .62; }}
-  .bs-total {{ font-weight: 400; font-size: .8rem; color: #6b6b6b; }}
+  .bs-total {{ font-weight: 400; font-size: .8rem; color: var(--muted); }}
   .bs-group {{ margin: .3rem 0 .3rem .25rem; }}
-  .bs-group h3 {{ font-size: .82rem; margin: .3rem 0 .15rem; color: #444; }}
+  .bs-group h3 {{ font-size: .82rem; margin: .3rem 0 .15rem; color: var(--muted); }}
   .bs-list {{ list-style: none; margin: 0; padding: 0;
              display: flex; flex-wrap: wrap; gap: .2rem 1rem; }}
   .bs-item {{ display: flex; align-items: center; gap: .4rem; font-size: .85rem;
              width: calc(50% - 1rem); min-width: 18rem; }}
   a.bs-link {{ display: inline-flex; align-items: center; gap: .4rem;
-              text-decoration: none; color: #14542f; }}
+              text-decoration: none; color: var(--accent); }}
   a.bs-link:hover {{ text-decoration: underline; }}
   .bs-thumb {{ width: 28px; height: 28px; object-fit: cover; border-radius: 3px;
-              background: #f0f0f0; }}
-  .bs-sci {{ color: #6b6b6b; font-style: italic; font-size: .8em; }}
+              background: var(--thumb-bg); }}
+  .bs-sci {{ color: var(--muted); font-style: italic; font-size: .8em; }}
   .bs-count {{ color: #9a7b4f; font-size: .78em; margin-left: auto; white-space: nowrap; }}
   /* Seasonal concentration; the "hot" variant flags species clustered in this
      month right now, so an in-season target reads differently from a resident. */
