@@ -117,14 +117,20 @@ _PAGE_TEMPLATE = """<!DOCTYPE html>
   .controls, .filters {{ display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; margin: .5rem 0 1rem; }}
   .filters label {{ display: inline-flex; align-items: center; gap: .35rem; }}
   .controls button, .filters select, .filters button {{ width: auto; margin: 0; }}
-  #match-count {{ margin-left: auto; }}
-  /* Tree indentation, thumbnail sizing, and JS-driven row hiding. */
-  .children {{ margin-left: .5rem; padding-left: .95rem; }}
+  #match-count {{ margin-left: auto; color: var(--pico-muted-color); }}
+  /* Tree rows: the disclosure marker hugs the label instead of the full row width. */
+  .tree summary, .leaf {{ width: fit-content; padding: 1px 5px; border-radius: 4px; }}
+  summary:hover, .leaf:hover, .obs:hover {{ background: var(--pico-code-background-color); }}
+  /* One faint guide rail per nesting level; it lights up along a hovered node's ancestry. */
+  .children {{ margin-left: .4rem; padding-left: .9rem; border-left: 1px solid var(--pico-muted-border-color); }}
+  details:hover > .children {{ border-left-color: var(--pico-primary); }}
+  .obs {{ display: flex; align-items: center; gap: .4rem; padding: 1px 5px; border-radius: 4px; }}
   img {{ width: 48px; height: 48px; object-fit: cover; vertical-align: middle; border-radius: 3px; }}
-  .filtered {{ display: none !important; }}
-  /* Restore word spacing between the inline name / rank / common / count spans. */
+  /* Word spacing between the inline name / rank / common / count spans. */
   .rank, .common, .count {{ margin-left: .35rem; }}
-  .obs {{ display: flex; align-items: center; gap: .4rem; }}
+  a.crumb {{ color: var(--pico-secondary); }}
+  .chain-sep {{ color: var(--pico-muted-color); }}
+  .filtered {{ display: none !important; }}
 </style>
 </head>
 <body>
@@ -142,9 +148,9 @@ _PAGE_TEMPLATE = """<!DOCTYPE html>
 """
 
 
-# The four views plus the landing page, in nav order. Both generated pages
-# (tree, missed) and the static pages (landing, map, rarest) live side by side
-# in the publish/ folder, so these are plain sibling links.
+# The four views plus the landing page, in nav order. The generated tree page
+# and the static pages (landing, missed, map, rarest) live side by side in the
+# publish/ folder, so these are plain sibling links.
 _PAGES = [
     ("index.html", "Home"),
     ("missed.html", "Missed common things"),
@@ -171,7 +177,7 @@ def _nav(current: str) -> str:
     "--output",
     "-o",
     type=click.Path(path_type=Path),
-    help="Path for the tree page; missed.html is written beside it (defaults to tree.html next to the source).",
+    help="Path for the tree page (defaults to tree.html next to the source).",
 )
 @click.option("--title", help="Page heading (defaults to the input file's stem).")
 @click.option(
@@ -204,8 +210,7 @@ def render_tree(
     Args:
         source: Either a user folder (holding inat_tree.json) or the JSON file
             itself, mirroring how inat_download.py addresses users by folder.
-        output: Path for the tree page; missed.html is written beside it.
-            Defaults to tree.html next to the source.
+        output: Path for the tree page (defaults to tree.html next to the source).
         title: Heading for the tree page; defaults to "Taxonomy tree".
         user: iNaturalist login for observation links; overrides the file's.
         fold_chains: Collapse single-child chains into breadcrumbs.
@@ -229,10 +234,9 @@ def render_tree(
     else:
         roots = data
 
-    # `-o` names the tree page; the blind-spots page is written alongside it so
-    # the whole set (landing, missed, tree, map, rarest) lands in one folder.
+    # `-o` names the tree page; the other views (missed, map, rarest) are
+    # standalone static files that sit beside it in the publish/ folder.
     output = output or (tree_json.parent / "tree.html")
-    missed_output = output.parent / "missed.html"
     for root in roots:
         _roll_up_counts(root)
 
@@ -256,18 +260,6 @@ def render_tree(
         content=tree_content,
     )
     output.write_text(tree_page, encoding="utf-8")
-
-    # Missed-common-things page: the live blind-spots panel, standalone.
-    missed_content = _blind_spots_panel(user, _observed_taxon_ids(roots)) or (
-        '<p class="bs-intro">Set an observer (--user) to compute blind spots.</p>'
-    )
-    missed_page = _PAGE_TEMPLATE.format(
-        title="Missed common things",
-        summary_line=summary,
-        nav=_nav("missed.html"),
-        content=missed_content,
-    )
-    missed_output.write_text(missed_page, encoding="utf-8")
     # The viewers' JS is built separately (`pnpm build`); place the tree
     # page's bundle beside the pages so their <script src> resolves.
     built_js = Path(__file__).parent / "dist" / "tree_page.js"
@@ -275,7 +267,7 @@ def render_tree(
         shutil.copy2(built_js, output.parent / "tree_page.js")
     else:
         click.echo(f"warning: {built_js} not built yet — run `pnpm build`", err=True)
-    click.echo(f"Wrote {output.resolve()} and {missed_output.resolve()}")
+    click.echo(f"Wrote {output.resolve()}")
 
 
 def _collect_regions(nodes: list[_Taxon]) -> list[str]:
@@ -342,75 +334,6 @@ def _summary_line(
         # Stamped as an ISO8601 instant; the date alone reads well here.
         bits.append(f"downloaded {html.escape(downloaded_at[:10])}")
     return " &middot; ".join(bits)
-
-
-def _observed_taxon_ids(nodes: list[_Taxon]) -> set[int]:
-    """Every taxon id the user has actually recorded (tree nodes carrying observations).
-
-    Handed to the blind-spots panel so its client-side script can mark which of
-    the species most-observed near you are already on your life list (✓) versus
-    still a gap (○).
-    """
-    seen: set[int] = set()
-
-    def walk(node: _Taxon) -> None:
-        if node.get("observations") or node.get("count"):
-            seen.add(node.get("id"))
-        for child in node.get("children", []):
-            walk(child)
-
-    for node in nodes:
-        walk(node)
-    return seen
-
-
-# Distance (km) of the blind-spots circle, and how many species to list per group.
-# Mirrored into the client script's constants; keep the two in step if changed.
-_BLIND_SPOT_RADIUS_KM = 100
-_BLIND_SPOT_PER_GROUP = 10
-
-
-def _blind_spots_panel(user: str | None, observed_ids: set[int]) -> str:
-    """The static shell for the single geolocation-driven blind-spots panel.
-
-    Blind spots are the species most observed *this month* within
-    `_BLIND_SPOT_RADIUS_KM` of where the viewer is right now, marked by whether
-    they have recorded each. Both the circle (browser geolocation) and the season
-    (the viewer's current month) are only known at view time, so unlike the rest
-    of the page this panel has no server-rendered rows: it ships a button, an
-    empty results container, and the data the client script needs (the observer's
-    login and the taxon ids they already have), then fills itself in from the live
-    iNaturalist API when the button is pressed. Each species is tagged with how
-    much of its yearly local activity falls in the current month, so a seasonal
-    "go now" target reads differently from a year-round resident. Rendered empty
-    and inert when there is no login to attribute the query to.
-    """
-    if not user:
-        return ""
-
-    # Embedded as JSON for the client script; escape "<" so the observed-id list
-    # or login can never close the <script> tag early.
-    payload = json.dumps({"user": user, "observed": sorted(observed_ids)}).replace(
-        "<", "\\u003c"
-    )
-    heading = (
-        f"Blind spots in season within {_BLIND_SPOT_RADIUS_KM} km of you "
-        "(○ = active near you now that you haven’t recorded)"
-    )
-    return (
-        '<details class="coverage blindspots" id="blind-spots">'
-        f"<summary>{heading}</summary>"
-        '<p class="bs-intro">Uses your browser location and the current month to '
-        f"find the species reported most within {_BLIND_SPOT_RADIUS_KM} km right "
-        "now, marks which you are still missing, and flags the ones concentrated "
-        "in this season. Your location stays in your browser — it is sent only to "
-        "iNaturalist to run the query, never stored.</p>"
-        '<button type="button" id="bs-locate">Show blind spots near me</button>'
-        '<span id="bs-status" class="bs-status"></span>'
-        '<div id="bs-results"></div>'
-        f'<script type="application/json" id="bs-data">{payload}</script>'
-        "</details>"
-    )
 
 
 def _roll_up_counts(node: _Taxon) -> int:

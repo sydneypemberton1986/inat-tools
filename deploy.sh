@@ -27,6 +27,7 @@ python3 render_tree.py "${user}" -o publish/tree.html
 echo "==> Copying static pages into publish/..."
 cp shared.css publish/shared.css
 cp index.html publish/index.html
+cp missed.html publish/missed.html
 cp grid_viewer.html publish/grid_viewer.html
 cp rarest.html publish/rarest.html
 cp range_viewer.html publish/range_viewer.html
@@ -36,6 +37,7 @@ cp dist/range_viewer.js dist/range_viewer.js.map publish/
 cp dist/rarest.js dist/rarest.js.map publish/
 cp dist/grid_viewer.js dist/grid_viewer.js.map publish/
 cp dist/tree_page.js dist/tree_page.js.map publish/
+cp dist/missed.js dist/missed.js.map publish/
 
 echo "==> Publishing..."
 cd publish
