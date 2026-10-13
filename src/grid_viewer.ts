@@ -3,12 +3,8 @@
 declare const L: typeof import('leaflet');
 
 // Initialize map centered on Austin, TX
-const map = L.map('map').setView([30.2672, -97.7431], 10);
+const map = L.map('map').setView([30.26, -97.74], 10);
 
-// --- Base layers -------------------------------------------------
-// Switch between these via the layers control (top-left). Satellite is
-// the default; the street and topographic maps render parks and other
-// public green spaces in green, which the satellite view can't show.
 const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     maxZoom: 18,
     attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
@@ -28,8 +24,8 @@ satellite.addTo(map); // default basemap
 
 L.control.layers({
     'Satellite': satellite,
-    'Street map (parks in green)': streets,
-    'Topographic': topo
+    'Streets': streets,
+    'Topography': topo
 }, null as any, { position: 'topleft' }).addTo(map);
 
 // The iNat grid rides in its own pane above whichever basemap is active,
@@ -65,7 +61,7 @@ function renderGrid(): void {
         iNatShadowLayer = null;
     }
 
-    const apiUrl = `https://api.inaturalist.org/v1/grid/{z}/{x}/{y}.png?user_login=${encodeURIComponent(username)}&color=red`;
+    const apiUrl = `https://api.inaturalist.org/v1/grid/{z}/{x}/{y}.png?user_login=${encodeURIComponent(username)}&color=blue`;
 
     // The coarser grid one level down, drawn very pale in the lower pane so it
     // shows through beneath the main grid. Skipped once there is no coarser level.
