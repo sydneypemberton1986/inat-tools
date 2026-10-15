@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iNat Tools: Trending</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.jade.min.css">
+    <style>
+        /* The grouped species lists; every class here is emitted by missed.js. */
+        #bs-results img { width: 40px; height: 40px; object-fit: cover; border-radius: 3px; }
+        .bs-group { margin-top: 1rem; }
+        .bs-list { list-style: none; padding: 0; margin: 0; }
+        .bs-item { display: flex; align-items: center; gap: .5rem; padding: .25rem 0; }
+        .bs-item-have { opacity: .55; }
+        .bs-mark { width: 1.2em; flex-shrink: 0; text-align: center; }
+        .bs-link { display: inline-flex; align-items: center; gap: .4rem; }
+        .bs-sci { font-style: italic; font-size: .85em; }
+        .bs-meta { margin-left: auto; text-align: right; font-size: .8em; white-space: nowrap; }
+        .bs-season { display: block; }
+    </style>
+</head>
+<body>
+    <main>
+        <hgroup>
+            <h1>Trending Near You</h1>
+            <p>The species most reported within 100&nbsp;km of you right now that you haven't recorded &mdash; what's out there this month that you're missing. Uses your browser location (sent only to iNaturalist, never stored) and the current month; ○ marks a species you haven't logged, ✓ one you have.</p>
+        </hgroup>
+
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+            </ul>
+        </nav>
+
+        <form onsubmit="return false">
+            <fieldset role="group">
+                <input type="text" id="observer" value="observer_sydney" placeholder="iNat username" aria-label="Observer">
+                <button id="locateBtn" onclick="runBlindSpots()">Show blind spots near me</button>
+            </fieldset>
+            <small id="status"></small>
+        </form>
+
+        <div id="bs-results"></div>
+    </main>
+
+    <script type="module" src="missed.js"></script>
+</body>
+</html>
