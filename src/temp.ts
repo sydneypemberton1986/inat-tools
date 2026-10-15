@@ -8,7 +8,7 @@ const inatApi = new Api({
 // Example: Fetch observations with full TypeScript autocomplete
 async function fetchObservations() {
   try {
-    const response = await inatApi.observations.observationsSearch({
+    const response = await inatApi.observations.observationsList({
       per_page: 5,
       quality_grade: ["research"]
     });
