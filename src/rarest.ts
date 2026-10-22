@@ -4,7 +4,6 @@ const iNatApi = new Api({baseUrl: 'https://api.inaturalist.org/v2'});
 const PER_PAGE = 10;
 const userName = "observer_sydney"
 
-// TODO tighten return type
 async function getObservations(user_login: string): Promise<any> {
   const response = await iNatApi.observations.observationsList({
     user_login: [user_login],
@@ -18,7 +17,6 @@ async function getObservations(user_login: string): Promise<any> {
   return response;
 }
 
-// TODO tighten return type
 async function getSpeciesCounts(user_login: string): Promise<any>{
   const response = await iNatApi.observations.speciesCountsList({
     user_login: [user_login],
@@ -29,5 +27,9 @@ async function getSpeciesCounts(user_login: string): Promise<any>{
   return response;
 }
 
-await getSpeciesCounts(userName)
-await getObservations(userName);
+
+export function main() {
+    getSpeciesCounts(userName)
+        .then(() => getObservations(userName))
+        .catch(console.error);
+}
