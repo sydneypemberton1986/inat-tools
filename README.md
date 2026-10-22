@@ -17,4 +17,15 @@ pnpm add --save-dev swagger-typescript-api
 
 pnpm exec swagger-typescript-api generate --path https://api.inaturalist.org/v2/api-docs --output ./src/api --name inaturalist.ts
 
+pnpm add p-throttle
+
+npx tsx
+```
+```ts
+const { main, iNatApi } = await import('./src/rarest.ts')
+
+main()
+
+let res = await iNatApi.observations.speciesCountsList({ user_login: ['observer_sydney'], per_page: 2 })
+res.data.total_results
 ```

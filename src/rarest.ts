@@ -1,7 +1,6 @@
 import { Api } from './api/inaturalist';
 
-const iNatApi = new Api({baseUrl: 'https://api.inaturalist.org/v2'});
-const PER_PAGE = 10;
+export const iNatApi = new Api({baseUrl: 'https://api.inaturalist.org/v2'});
 const userName = "observer_sydney"
 
 async function getObservations(user_login: string): Promise<any> {
@@ -9,7 +8,6 @@ async function getObservations(user_login: string): Promise<any> {
     user_login: [user_login],
     order_by: "observed_on",
     order: "desc",
-    per_page: PER_PAGE,
     page: 0,
     fields: ["total_results"],
   });
@@ -20,7 +18,6 @@ async function getObservations(user_login: string): Promise<any> {
 async function getSpeciesCounts(user_login: string): Promise<any>{
   const response = await iNatApi.observations.speciesCountsList({
     user_login: [user_login],
-    per_page: PER_PAGE,
     page: 0,
   })
   console.log("Species Counts:", response.data.results);
