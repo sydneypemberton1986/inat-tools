@@ -1,4 +1,4 @@
-import {Api} from './api/inaturalist';
+import {Api, type Observation} from './api/inaturalist';
 import pThrottle from 'p-throttle';
 import {fetchAllPages} from "./api/fetchAllPages.ts";
 
@@ -23,26 +23,17 @@ export async function getObservations(user_login: string): Promise<any> {
     user_login: [user_login],
     order_by: "observed_on",
     order: "desc",
-    fields: ["all"],
-    // https://api.inaturalist.org/v1/observations?user_login=nickmoncaleano&taxon_id=68884,63058,127685,130893,117433,48206,47602,416512,46017,6930,48372,47562,47380,922110,54743&per_page=200&page=1&order_by=observed_on&order=desc
-  //   https://api.inaturalist.org/v2/observations?fields=(taxon:(observations_count))
-  });
-}
-
-export async function getSpeciesCounts(user_login: string): Promise<any>{
-  return await fetchAllPages(iNatApi.observations.speciesCountsList, {
-    user_login: [user_login],
-    fields: ["all"],
-    // https://api.inaturalist.org/v1/observations/species_counts?user_login=nickmoncaleano&per_page=500&page=1
+    fields: ["taxon.observations_count"],
+    per_page: 500,
   });
 }
 
 
-export async function main() {
+
+export async function main(): Promise<any> {
   const userName = "observer_sydney"
 
-    getSpeciesCounts(userName)
-        .then(() => getObservations(userName))
-        .catch(console.error);
-
+  const observations = await getObservations(userName);
+  observations.sort((o1: Observation, o2: Observation) => (o1.taxon?.observations_count ?? 0) - (o2.taxon?.observations_count ?? 0));
+  return observations
 }
