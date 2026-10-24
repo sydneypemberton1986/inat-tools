@@ -19,7 +19,6 @@ async function loggedFetch(input: RequestInfo | URL, init?: RequestInit) {
 }
 
 
-/** An observation that came back with the id and taxon count the rarity sort needs. */
 interface CountedObservation extends Observation {
   id: number;
   taxon: Taxon & {observations_count: number};
@@ -29,22 +28,26 @@ const isCounted = (o: Observation): o is CountedObservation =>
   o.taxon?.observations_count != null;
 
 
-export async function main(): Promise<any> {
-  const userLogin = "observer_sydney"
+export async function main(userLogin: string): Promise<any> {
+  // const userLogin = "observer_sydney"
 
   const observationsWithCounts = (await fetchAllPages(iNatApi.observations.observationsList, {
     user_login: [userLogin],
     order_by: "observed_on",
     order: "desc",
-    fields: ["id","taxon.observations_count"],
+    // v2 wants ONE comma-separated field spec; an array becomes repeated
+    // `fields=` params and the server drops all but one of them.
+    fields: "id,taxon.observations_count",
     per_page: 500,
   })).filter(isCounted);
 
   observationsWithCounts.sort((o1, o2) => o1.taxon.observations_count - o2.taxon.observations_count);
-  const ids = observationsWithCounts.slice(0,100).map(o => o.id);
+  const rarest = observationsWithCounts.slice(0, 100);
+  const ids = rarest.map(o => o.id);
 
-  return await iNatApi.observations.observationsList({
+  const details = (await iNatApi.observations.observationsList({
     fields: [
+      "id", // needed to join back to `rarest` (the server ignores our id order)
       "uri",
       "quality_grade",
       "place_guess",
@@ -52,7 +55,15 @@ export async function main(): Promise<any> {
       "taxon.name",
       "taxon.preferred_common_name",
       // TODO: thumbnail
-    ],
+    ].join(","),
     id: ids,
-  });
+    per_page: ids.length, // default is 30; make sure every id comes back
+  })).data.results;
+
+  // The `id: ids` query returns rows in the server's order, not ours, so join
+  // by id to keep the rarity ordering from `rarest`.
+  const byId = new Map(details.map(d => [d.id, d]));
+  const observationsList = rarest.map(o => byId.get(o.id));
+
+  return [observationsWithCounts, observationsList]
 }
