@@ -1,5 +1,14 @@
 # iNat Tools
 
+## Run
+
+```shell
+pnpm install
+pnpm run dev
+```
+
+Then open the printed URL and visit `/rarest.html`.
+
 ## Record of Establishing Commands
 
 ```shell

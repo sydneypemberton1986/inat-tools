@@ -96,7 +96,7 @@ function _isCounted(o: Observation): o is _CountedObservation {
  * served at several sizes under the same path (square, thumb, small, medium,
  * large, original). Swap the size segment to get a larger thumbnail.
  */
-function _thumbnailUrl(squareUrl?: string | null, size = 'medium'): string | undefined {
+function _thumbnailUrl(squareUrl?: string | null, size = 'small'): string | undefined {
   return squareUrl?.replace(/\/square(\.\w+)(\?|$)/, `/${size}$1$2`);
 }
 
