@@ -61,9 +61,11 @@ export async function main(userLogin: string): Promise<any> {
   })).data.results;
 
   // The `id: ids` query returns rows in the server's order, not ours, so join
-  // by id to keep the rarity ordering from `rarest`.
+  // by id to keep the rarity ordering (rarest first) from `rarest`, folding in
+  // the observation count we already fetched.
   const byId = new Map(details.map(d => [d.id, d]));
-  const observationsList = rarest.map(o => byId.get(o.id));
-
-  return [observationsWithCounts, observationsList]
+  return rarest.map(o => ({
+    ...byId.get(o.id),
+    observations_count: o.taxon.observations_count,
+  }));
 }
