@@ -23,12 +23,16 @@ export async function main(userLogin: string) {
 
   const observationsWithCounts = (await fetchAllPages(api.observations.observationsList, {
     user_login: [userLogin],
-    order_by: 'observed_on',
-    order: 'desc',
+    // Ascending id => new observations append to the last page instead of
+    // shifting every page, so earlier pages stay immutable and cacheable.
+    // The output order is unaffected; we re-sort by rarity below.
+    order_by: 'id',
+    order: 'asc',
     // v2 wants ONE comma-separated field spec; an array becomes repeated
     // `fields=` params and the server drops all but one of them.
     fields: 'id,taxon.observations_count',
     per_page: 500,
+    ttl: 86400, // browser caches each (now immutable) page for a day
   })).filter(_isCounted);
 
   observationsWithCounts.sort((a, b) => a.taxon.observations_count - b.taxon.observations_count);
