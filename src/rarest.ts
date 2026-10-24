@@ -54,7 +54,7 @@ export async function main(userLogin: string): Promise<any> {
       "observed_on",
       "taxon.name",
       "taxon.preferred_common_name",
-      // TODO: thumbnail
+      "photos.url", // the 75px `square.jpg`; see `thumbnailUrl` below
     ].join(","),
     id: ids,
     per_page: ids.length, // default is 30; make sure every id comes back
@@ -64,8 +64,20 @@ export async function main(userLogin: string): Promise<any> {
   // by id to keep the rarity ordering (rarest first) from `rarest`, folding in
   // the observation count we already fetched.
   const byId = new Map(details.map(d => [d.id, d]));
-  return rarest.map(o => ({
-    ...byId.get(o.id),
-    observations_count: o.taxon.observations_count,
-  }));
+  return rarest.map(o => {
+    const detail = byId.get(o.id);
+    return {
+      ...detail,
+      observations_count: o.taxon.observations_count,
+      thumbnail_url: thumbnailUrl(detail?.photos?.[0]?.url),
+    };
+  });
 }
+
+/**
+ * iNaturalist v2 only returns the 75px `square.jpg` URL, but every photo is
+ * served at several sizes under the same path (square, thumb, small, medium,
+ * large, original). Swap the size segment to get a larger thumbnail.
+ */
+const thumbnailUrl = (squareUrl?: string, size = "medium"): string | undefined =>
+  squareUrl?.replace(/\/square(\.\w+)(\?|$)/, `/${size}$1$2`);
