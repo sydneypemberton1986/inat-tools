@@ -1,13 +1,6 @@
-import {Api, type Observation} from './api/inaturalist';
+import {Api, type Observation, type Taxon} from './api/inaturalist';
 import pThrottle from 'p-throttle';
 import {fetchAllPages} from "./api/fetchAllPages.ts";
-
-
-const loggedFetch: typeof fetch = async (...args) => {
-  const r = new Request(...args);
-  console.debug(r.method, r.url, r.body ? await r.clone().text() : '');
-  return fetch(r);
-}
 
 export const iNatApi = new Api({
   baseUrl: 'https://api.inaturalist.org/v2',
@@ -18,22 +11,48 @@ export const iNatApi = new Api({
   customFetch: pThrottle({limit: 1, interval: 1000})(loggedFetch)
 });
 
-export async function getObservations(user_login: string): Promise<any> {
-  return await fetchAllPages(iNatApi.observations.observationsList, {
-    user_login: [user_login],
-    order_by: "observed_on",
-    order: "desc",
-    fields: ["taxon.observations_count"],
-    per_page: 500,
-  });
+
+async function loggedFetch(input: RequestInfo | URL, init?: RequestInit) {
+  const r = new Request(input, init);
+  console.debug(r.method, r.url, r.body ? await r.clone().text() : '');
+  return fetch(r);
 }
 
 
+/** An observation that came back with the id and taxon count the rarity sort needs. */
+interface CountedObservation extends Observation {
+  id: number;
+  taxon: Taxon & {observations_count: number};
+}
+
+const isCounted = (o: Observation): o is CountedObservation =>
+  o.taxon?.observations_count != null;
+
 
 export async function main(): Promise<any> {
-  const userName = "observer_sydney"
+  const userLogin = "observer_sydney"
 
-  const observations = await getObservations(userName);
-  observations.sort((o1: Observation, o2: Observation) => (o1.taxon?.observations_count ?? 0) - (o2.taxon?.observations_count ?? 0));
-  return observations
+  const observationsWithCounts = (await fetchAllPages(iNatApi.observations.observationsList, {
+    user_login: [userLogin],
+    order_by: "observed_on",
+    order: "desc",
+    fields: ["id","taxon.observations_count"],
+    per_page: 500,
+  })).filter(isCounted);
+
+  observationsWithCounts.sort((o1, o2) => o1.taxon.observations_count - o2.taxon.observations_count);
+  const ids = observationsWithCounts.slice(0,100).map(o => o.id);
+
+  return await iNatApi.observations.observationsList({
+    fields: [
+      "uri",
+      "quality_grade",
+      "place_guess",
+      "observed_on",
+      "taxon.name",
+      "taxon.preferred_common_name",
+      // TODO: thumbnail
+    ],
+    id: ids,
+  });
 }
