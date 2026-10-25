@@ -6,8 +6,8 @@
     <title>iNat Tools: Trending</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.jade.min.css">
     <style>
-        /* The grouped species lists; every class here is emitted by missed.js. */
-        #bs-results img { width: 40px; height: 40px; object-fit: cover; border-radius: 3px; }
+        /* The grouped species lists; every class here is emitted by trending.view.ts. */
+        #results img { width: 40px; height: 40px; object-fit: cover; border-radius: 3px; }
         .bs-group { margin-top: 1rem; }
         .bs-list { list-style: none; padding: 0; margin: 0; }
         .bs-item { display: flex; align-items: center; gap: .5rem; padding: .25rem 0; }
@@ -27,22 +27,20 @@
         </hgroup>
 
         <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-            </ul>
+            <ul><li><a href="index.html">Home</a></li></ul>
         </nav>
 
-        <form onsubmit="return false">
+        <form id="form">
             <fieldset role="group">
                 <input type="text" id="observer" value="observer_sydney" placeholder="iNat username" aria-label="Observer">
-                <button id="locateBtn" onclick="runBlindSpots()">Show blind spots near me</button>
+                <button id="locateBtn">Show what's trending near me</button>
             </fieldset>
             <small id="status"></small>
         </form>
 
-        <div id="bs-results"></div>
+        <div id="results"></div>
     </main>
 
-    <script type="module" src="missed.js"></script>
+    <script type="module" src="/src/trending.view.ts"></script>
 </body>
 </html>
