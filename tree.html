@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iNat Tools: Taxonomy Tree</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.jade.min.css">
+    <style>
+        /* Keep Pico's full-width selects inline in the filter bar. */
+        .filters { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; margin: .5rem 0 1rem; }
+        .filters label { display: inline-flex; align-items: center; gap: .35rem; }
+        .filters select, .filters button { width: auto; margin: 0; }
+        #match-count { margin-left: auto; color: var(--pico-muted-color); }
+        /* Functional tree layout: Pico gives nested <details> no indentation. */
+        .children { margin-left: .5rem; padding-left: .9rem; border-left: 1px solid var(--pico-muted-border-color); }
+        .obs { display: flex; align-items: center; gap: .4rem; }
+        .obs img { width: 48px; height: 48px; object-fit: cover; }
+        summary, .leaf, .obs { width: fit-content; }
+        .chain-sep { color: var(--pico-muted-color); }
+        .filtered { display: none !important; }
+    </style>
+</head>
+<body>
+    <main>
+        <hgroup>
+            <h1>Taxonomy Tree</h1>
+            <p>Your observations arranged by the tree of life &mdash; every taxon you've recorded nested under its ancestors, with each observation hanging off the taxon it was identified as.</p>
+        </hgroup>
+
+        <nav>
+            <ul><li><a href="index.html">Home</a></li></ul>
+        </nav>
+
+        <form id="form">
+            <fieldset role="group">
+                <input type="text" id="observer" value="observer_sydney" placeholder="iNat username" aria-label="Observer">
+                <button id="loadBtn">Load</button>
+            </fieldset>
+            <small id="status"></small>
+        </form>
+
+        <div class="filters">
+            <label>Location
+                <select id="f-region" data-key="region"><option value="">All</option></select>
+            </label>
+            <label>Establishment
+                <select id="f-establishment" data-key="establishment">
+                    <option value="">All</option>
+                    <option value="native">Native</option>
+                    <option value="introduced">Introduced</option>
+                </select>
+            </label>
+            <label>Wild / captive
+                <select id="f-captive" data-key="captive">
+                    <option value="">All</option>
+                    <option value="0">Wild</option>
+                    <option value="1">Captive</option>
+                </select>
+            </label>
+            <label>ID level
+                <select id="f-coarse" data-key="coarse">
+                    <option value="">All</option>
+                    <option value="0">To species</option>
+                    <option value="1">Above species</option>
+                </select>
+            </label>
+            <button type="button" id="f-reset" class="secondary">Reset</button>
+            <span id="match-count"></span>
+        </div>
+
+        <fieldset role="group">
+            <button id="expand" class="secondary">Expand all</button>
+            <button id="collapse" class="secondary">Collapse all</button>
+        </fieldset>
+
+        <div id="tree"></div>
+    </main>
+
+    <script type="module" src="/src/tree.view.ts"></script>
+</body>
+</html>

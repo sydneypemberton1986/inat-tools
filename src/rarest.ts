@@ -1,6 +1,6 @@
-import {Api, type Observation, type Taxon} from './api/inaturalist';
-import pThrottle from 'p-throttle';
+import {createApi} from './api/client.ts';
 import {fetchAllPages} from './api/fetchAllPages.ts';
+import type {Observation, Taxon} from './api/inaturalist';
 
 declare global {
   interface ImportMeta {
@@ -19,7 +19,7 @@ declare const process: {argv: readonly string[]};
  * details, the global observation count, and a thumbnail URL.
  */
 export async function main(userLogin: string) {
-  const api = _createApi();
+  const api = createApi();
 
   const observationsWithCounts = (await fetchAllPages(api.observations.observationsList, {
     user_login: [userLogin],
@@ -65,24 +65,6 @@ export async function main(userLogin: string) {
       thumbnail_url: _thumbnailUrl(detail?.photos?.[0]?.url),
     };
   });
-}
-
-/** Build an API client whose requests are throttled and logged. */
-function _createApi(): Api<unknown> {
-  return new Api({
-    baseUrl: 'https://api.inaturalist.org/v2',
-    // https://www.inaturalist.org/pages/developers states
-    // > We throttle API usage to a max of 100 requests per minute,
-    // > though we ask that you try to keep it to 60 requests per minute or lower.
-    customFetch: pThrottle({limit: 1, interval: 1000})(_loggedFetch),
-  });
-}
-
-/** `fetch`, but logs the method, URL, and body of each request first. */
-async function _loggedFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  const request = new Request(input, init);
-  console.debug(request.method, request.url, request.body ? await request.clone().text() : '');
-  return fetch(request);
 }
 
 interface _CountedObservation extends Observation {
