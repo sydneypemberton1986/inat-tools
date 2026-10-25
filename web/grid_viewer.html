@@ -47,6 +47,10 @@
 
     <div id="map"></div>
 
-    <script type="module" src="../src/grid_viewer.view.ts"></script>
+    <!-- Composition root: hand the viewer the browser globals it needs, then start it. -->
+    <script type="module">
+        import {startGridViewer} from '../src/grid_viewer.view.ts';
+        startGridViewer({L: window.L, document, navigator});
+    </script>
 </body>
 </html>
