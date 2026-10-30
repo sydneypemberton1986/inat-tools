@@ -132,6 +132,27 @@ let entries: Entry[] = [];
 let currentTaxon: Taxon | null = null;
 let childOffset = 0;
 
+// --- URL state --------------------------------------------------------------
+// The loaded taxon is mirrored into ?taxon_id= so a view can be bookmarked or
+// shared, and the browser's back/forward buttons walk the taxa you've visited.
+
+const TAXON_PARAM = 'taxon_id';
+
+/** The taxon id encoded in the current URL, or null if absent/malformed. */
+function taxonIdFromUrl(): number | null {
+  const raw = new URLSearchParams(location.search).get(TAXON_PARAM);
+  return raw && /^\d+$/.test(raw) ? parseInt(raw, 10) : null;
+}
+
+/** Reflect the loaded taxon in the URL. `push` adds a history entry (user
+ *  navigation); otherwise we replace in place (initial load, back/forward sync). */
+function syncUrl(id: number, push: boolean) {
+  if (!push && taxonIdFromUrl() === id) return; // already in sync, don't churn history
+  const url = new URL(location.href);
+  url.searchParams.set(TAXON_PARAM, String(id));
+  history[push ? 'pushState' : 'replaceState']({taxonId: id}, '', url);
+}
+
 // --- Tile layers ------------------------------------------------------------
 
 /** Extra observation-tile query params from the active filters (ranges ignore these). */
@@ -425,7 +446,7 @@ function parseTaxonInput(raw: string): {id: number} | {query: string} | null {
   return {query: text};
 }
 
-async function loadTaxonById(id: number) {
+async function loadTaxonById(id: number, {push = true} = {}) {
   setStatus('Loading…');
   for (const entry of entries) removeEntryLayer(entry);
   entries = [];
@@ -433,6 +454,7 @@ async function loadTaxonById(id: number) {
     const taxon = await fetchTaxon(id);
     if (!taxon) { setStatus(`Could not load taxon ${id}.`); return; }
     currentTaxon = taxon;
+    syncUrl(id, push);
     childOffset = 0;
     taxonInput.value = taxon.name;
     renderBreadcrumb(taxon);
@@ -445,14 +467,14 @@ async function loadTaxonById(id: number) {
   }
 }
 
-async function loadFromInput() {
+async function loadFromInput({push = true} = {}) {
   const parsed = parseTaxonInput(taxonInput.value);
   if (!parsed) { setStatus('Enter a taxon name, ID, or URL.'); return; }
   hideSuggestions();
   try {
     const id = 'id' in parsed ? parsed.id : (await searchTaxa(parsed.query, 1))[0]?.id;
     if (id == null) { setStatus('No taxon found for that search.'); return; }
-    await loadTaxonById(id);
+    await loadTaxonById(id, {push});
   } catch (err) {
     console.error(err);
     setStatus(`Error resolving taxon: ${(err as Error).message}`);
@@ -505,5 +527,16 @@ document.addEventListener('mousedown', (event) => {
   hideSuggestions();
 });
 
+// Back/forward between taxa you've loaded: re-render from the URL without pushing.
+window.addEventListener('popstate', () => {
+  const id = taxonIdFromUrl();
+  if (id != null) void loadTaxonById(id, {push: false});
+});
+
 setMode(currentMode);
-void loadFromInput();
+
+// Honor a ?taxon_id= deep link; otherwise fall back to the default input. Neither
+// seeds a history entry, so the first Back press leaves the page as expected.
+const initialTaxonId = taxonIdFromUrl();
+if (initialTaxonId != null) void loadTaxonById(initialTaxonId, {push: false});
+else void loadFromInput({push: false});
