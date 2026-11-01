@@ -6,8 +6,9 @@ community standards.**
 
 ## Context
 
-The `fresh` branch is a clean rewrite of the old vibe-coded site (on `main` /
-`inat-viewer`). Five pages are migrated, each a `*.html` + `src/*.view.ts`, with
+This codebase (`main`) is a clean rewrite of the old vibe-coded site (the former
+`inat-viewer` repo and the pre-rewrite `main`, now archived at tag
+`archive/old-main`). Five pages are migrated, each a `*.html` + `src/*.view.ts`, with
 a `src/*.ts` data module for the four JSON-driven ones:
 
 | Page | HTML | View | Data module |
