@@ -59,11 +59,23 @@ function el(tag: string, props: Record<string, unknown> = {}, ...children: (Node
   return node;
 }
 
+type TripRow = Awaited<ReturnType<typeof main>>['rows'][number];
+
+/** Display name: iNat's common name, capitalised the way its taxon pages are
+ *  ("tall gramma" → "Tall Gramma", but "Nerve-ray" stays as-is), else the
+ *  scientific name. Only the first letter of each space-separated word is
+ *  touched, so scientific binomials are never mangled. */
+function _commonName(taxon: TripRow['taxon']): string {
+  const common = taxon?.preferred_common_name;
+  if (common) return common.replace(/(^|\s)(\p{L})/gu, (_m, pre, ch) => pre + ch.toUpperCase());
+  return taxon?.name || 'Unknown';
+}
+
 function renderSummary(summary: Awaited<ReturnType<typeof main>>['summary']) {
   summaryEl.replaceChildren(
     el('strong', {textContent: `${summary.total_observations} observations`}),
     ` · ${summary.unique_taxa} unique taxa · `,
-    el('mark', {textContent: `★ ${summary.first_time_count} first-time sightings`}),
+    el('span', {className: 'lifer-badge'}, el('span', {className: 'lifer-dot'}, '●'), ` ${summary.first_time_count} first-time sightings`),
     ` · ${summary.research_grade_count} research grade`,
   );
 }
@@ -77,7 +89,7 @@ function renderMap(rows: Awaited<ReturnType<typeof main>>['rows']) {
   mapEl.hidden = false;
 
   if (!map) {
-    map = L.map(mapEl);
+    map = L.map(mapEl, {zoomControl: false}); // the +/- buttons look clunky; scroll/pinch still zoom
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
     }).addTo(map);
@@ -96,7 +108,7 @@ function renderMap(rows: Awaited<ReturnType<typeof main>>['rows']) {
   }
 
   for (const row of withCoords) {
-    const name = row.taxon?.preferred_common_name || row.taxon?.name || 'Unknown';
+    const name = _commonName(row.taxon);
     const marker = L.circleMarker(row.coords, {
       radius: row.is_first ? 8 : 6,
       color: row.is_first ? '#ca8a04' : '#1d4ed8',
@@ -105,7 +117,7 @@ function renderMap(rows: Awaited<ReturnType<typeof main>>['rows']) {
       weight: 2,
     });
     const popupNode = el('div', {},
-      row.is_first ? el('strong', {textContent: '★ First time! '}) : '',
+      row.is_first ? el('span', {className: 'lifer-badge'}, el('span', {className: 'lifer-dot'}, '●'), ' First time! ') : '',
       el('a', {href: row.uri ?? '#', target: '_blank', rel: 'noopener', textContent: name}),
       el('br'),
       el('small', {
@@ -124,7 +136,7 @@ function renderMap(rows: Awaited<ReturnType<typeof main>>['rows']) {
 function renderTable(rows: Awaited<ReturnType<typeof main>>['rows']) {
   list.replaceChildren(...rows.map((row, i) => {
     const taxon = row.taxon;
-    const name = taxon?.preferred_common_name || taxon?.name || 'Unknown';
+    const name = _commonName(taxon);
     const meta = [row.time_observed_at || row.observed_on, row.place_guess].filter(Boolean).join(' · ');
     return el('tr', {},
       el('td', {textContent: String(i + 1)}),
@@ -132,7 +144,7 @@ function renderTable(rows: Awaited<ReturnType<typeof main>>['rows']) {
       el('td', {},
         el('a', {href: row.uri ?? '#', target: '_blank', rel: 'noopener', textContent: name}),
         row.is_first ? ' ' : '',
-        row.is_first ? el('mark', {textContent: '★ First time!'}) : '',
+        row.is_first ? el('span', {className: 'lifer-badge'}, el('span', {className: 'lifer-dot'}, '●'), ' First time!') : '',
         el('br'),
         el('small', {}, el('i', {textContent: taxon?.name ?? ''})),
         el('br'),

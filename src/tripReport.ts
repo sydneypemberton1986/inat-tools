@@ -96,28 +96,15 @@ export async function main(
     }
   }
 
-  // Walk chronologically so if a lifer is photographed twice on the same day,
-  // the earliest sighting gets the "First time!" mark.
-  const chronological = [...observations].sort(
-    (a, b) =>
-      (a.time_observed_at ?? '').localeCompare(b.time_observed_at ?? '') ||
-      (a.id ?? 0) - (b.id ?? 0),
-  );
-
-  const firstObsIds = new Set<number>();
-  const seenTodayTaxonIds = new Set<number>();
-  for (const o of chronological) {
+  // Any species-or-finer taxon not seen before today is a lifer. Flag *every*
+  // observation of it on the day, not just the first — all of them are the
+  // first time that taxon was seen.
+  const liferTaxonIds = new Set<number>();
+  for (const o of observations) {
     const taxonId = o.taxon?.id;
     const isSpeciesOrFiner = (o.taxon?.rank_level ?? 100) <= SPECIES_RANK_LEVEL;
-    if (
-      o.id != null &&
-      taxonId != null &&
-      isSpeciesOrFiner &&
-      !previouslySeenTaxonIds.has(taxonId) &&
-      !seenTodayTaxonIds.has(taxonId)
-    ) {
-      seenTodayTaxonIds.add(taxonId);
-      firstObsIds.add(o.id);
+    if (taxonId != null && isSpeciesOrFiner && !previouslySeenTaxonIds.has(taxonId)) {
+      liferTaxonIds.add(taxonId);
     }
   }
 
@@ -132,7 +119,7 @@ export async function main(
   const rows = sorted.map((o: Observation) => ({
     ...o,
     observations_count: o.taxon?.observations_count ?? null,
-    is_first: o.id != null && firstObsIds.has(o.id),
+    is_first: o.taxon?.id != null && liferTaxonIds.has(o.taxon.id),
     coords: _parseCoords(o.location),
     thumbnail_url: _thumbnailUrl(o.photos?.[0]?.url),
   }));
@@ -141,7 +128,7 @@ export async function main(
     summary: {
       total_observations: rows.length,
       unique_taxa: new Set(rows.map(r => r.taxon?.id).filter(id => id != null)).size,
-      first_time_count: firstObsIds.size,
+      first_time_count: liferTaxonIds.size, // distinct lifer taxa
       research_grade_count: rows.filter(r => r.quality_grade === 'research').length,
     },
     rows,

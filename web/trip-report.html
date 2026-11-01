@@ -12,6 +12,12 @@
     <style>
         #map { height: 380px; margin: 1rem 0; }
 
+        /* First-time (lifer) marker: a gold circle + label, matching the map
+         * markers and calendar. The label inherits the surrounding text colour
+         * so it stays readable on both the dark page and the white map popup. */
+        .lifer-badge { font-weight: 600; white-space: nowrap; }
+        .lifer-dot { color: #facc15; }
+
         /* Custom calendar date picker, styled to read like an ordinary month
          * calendar (circular day cells, quiet chrome). Lifer days are gold and
          * days with observations blue, matching the map markers. */
