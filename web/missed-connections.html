@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iNat Tools: Missed Connections</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.jade.min.css">
+    <style>
+        /* Ranked list of nearby species you've never logged; classes are emitted
+         * by missedConnections.view.ts. */
+        #results img { width: 40px; height: 40px; object-fit: cover; border-radius: 3px; }
+        .mc-list { list-style: none; padding: 0; margin: 1rem 0 0; counter-reset: mc; }
+        .mc-item { display: flex; align-items: center; gap: .5rem; padding: .3rem 0; border-bottom: 1px solid rgba(127,127,127,.15); }
+        .mc-rank { width: 1.6em; flex-shrink: 0; text-align: right; opacity: .5; font-variant-numeric: tabular-nums; }
+        .mc-link { display: inline-flex; align-items: center; gap: .5rem; }
+        .mc-sci { font-style: italic; font-size: .85em; opacity: .8; }
+        .mc-meta { margin-left: auto; text-align: right; font-size: .8em; white-space: nowrap; opacity: .8; }
+    </style>
+</head>
+<body>
+    <main>
+        <hgroup>
+            <h1>💌 Missed Connections</h1>
+            <p>Species being seen right around you this month that you've never recorded &mdash; the ones you keep crossing paths with but missing. Pick a radius, share your location (sent only to iNaturalist, never stored), and go look around.</p>
+        </hgroup>
+
+        <nav>
+            <ul><li><a href="index.html">Home</a></li></ul>
+        </nav>
+
+        <form id="form">
+            <fieldset role="group">
+                <input type="text" id="observer" value="observer_sydney" placeholder="iNat username" aria-label="Observer">
+                <select id="radius" aria-label="Radius">
+                    <option value="1">1 km</option>
+                    <option value="2">2 km</option>
+                    <option value="5" selected>5 km</option>
+                    <option value="10">10 km</option>
+                    <option value="25">25 km</option>
+                </select>
+                <button id="locateBtn">Who am I missing?</button>
+            </fieldset>
+            <small id="status"></small>
+        </form>
+
+        <div id="results"></div>
+    </main>
+
+    <script type="module" src="../src/missedConnections.view.ts"></script>
+</body>
+</html>
