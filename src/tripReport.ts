@@ -148,6 +148,105 @@ export async function main(
   };
 }
 
+/** Which days in a month had observations, and which had a first-ever (lifer) sighting. */
+export interface MonthActivity {
+  /** 'YYYY-MM-DD' for every day the user observed anything. */
+  observed: Set<string>;
+  /** 'YYYY-MM-DD' for every day a taxon was seen for the very first time. */
+  lifers: Set<string>;
+}
+
+/**
+ * Summarize a calendar month for `userLogin` so the date picker can colour each
+ * day: which days have observations, and which carry a lifer. Uses the same
+ * prior-counts trick as `main` — taxa not seen before the month, taken in
+ * chronological order, have their first in-month day marked as the lifer day.
+ *
+ * @param year  full year, e.g. 2026
+ * @param month 1-12
+ */
+export async function monthActivity(userLogin: string, year: number, month: number): Promise<MonthActivity> {
+  const api = createApi();
+  const first = `${year}-${_pad(month)}-01`;
+  const lastDom = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const last = `${year}-${_pad(month)}-${_pad(lastDom)}`;
+
+  const observations = await fetchAllPages(api.observations.observationsList, {
+    user_login: [userLogin],
+    d1: first,
+    d2: last,
+    order_by: 'id',
+    order: 'asc',
+    fields: 'id,observed_on,time_observed_at,taxon.id,taxon.rank_level',
+    per_page: 200,
+    ttl: 86400,
+  });
+
+  const observed = new Set<string>();
+  for (const o of observations) {
+    if (o.observed_on) observed.add(o.observed_on);
+  }
+
+  const taxonIds = [
+    ...new Set(
+      observations
+        .filter(o => (o.taxon?.rank_level ?? 100) <= SPECIES_RANK_LEVEL)
+        .map(o => o.taxon?.id)
+        .filter((id): id is number => id != null),
+    ),
+  ];
+
+  const previouslySeenTaxonIds = new Set<number>();
+  if (taxonIds.length > 0) {
+    const priorCounts = await fetchAllPages(api.observations.speciesCountsList, {
+      user_login: [userLogin],
+      taxon_id: taxonIds,
+      d2: _dayBefore(first),
+      fields: 'taxon.id,count',
+      per_page: 500,
+      ttl: 86400,
+    });
+    for (const row of priorCounts) {
+      if (row.taxon?.id != null && (row.count ?? 0) > 0) {
+        previouslySeenTaxonIds.add(row.taxon.id);
+      }
+    }
+  }
+
+  // Chronological by day, then time, then id — so a taxon's earliest day in the
+  // month is the one that gets the lifer mark.
+  const chronological = [...observations].sort(
+    (a, b) =>
+      (a.observed_on ?? '').localeCompare(b.observed_on ?? '') ||
+      (a.time_observed_at ?? '').localeCompare(b.time_observed_at ?? '') ||
+      (a.id ?? 0) - (b.id ?? 0),
+  );
+
+  const lifers = new Set<string>();
+  const seenThisMonth = new Set<number>();
+  for (const o of chronological) {
+    const taxonId = o.taxon?.id;
+    const isSpeciesOrFiner = (o.taxon?.rank_level ?? 100) <= SPECIES_RANK_LEVEL;
+    if (
+      o.observed_on &&
+      taxonId != null &&
+      isSpeciesOrFiner &&
+      !previouslySeenTaxonIds.has(taxonId) &&
+      !seenThisMonth.has(taxonId)
+    ) {
+      seenThisMonth.add(taxonId);
+      lifers.add(o.observed_on);
+    }
+  }
+
+  return {observed, lifers};
+}
+
+/** Zero-pad a 1- or 2-digit number to width 2. */
+function _pad(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
 /** The UTC day before `dateStr` (YYYY-MM-DD), as YYYY-MM-DD. */
 function _dayBefore(dateStr: string): string {
   const [y, m, d] = dateStr.split('-').map(Number);
