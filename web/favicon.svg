@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="iNat Tools">
+  <title>iNat Tools</title>
+  <!-- Magnifying glass: looking closely at nature. Green lens + specimen dot. -->
+  <circle cx="13" cy="13" r="8.5" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
+  <circle cx="13" cy="13" r="3.4" fill="#43a047"/>
+  <line x1="19.3" y1="19.3" x2="28" y2="28" stroke="#2e7d32" stroke-width="3.6" stroke-linecap="round"/>
+</svg>
