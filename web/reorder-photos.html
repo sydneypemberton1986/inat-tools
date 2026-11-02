@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <title>🔀 iNat Tools: Reorder Photos</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.jade.min.css">
+    <style>
+        .rp-list { list-style: none; padding: 0; margin: 1rem 0; max-width: 32rem; }
+        .rp-item { display: flex; align-items: center; gap: .6rem; padding: .35rem 0; border-bottom: 1px solid rgba(127,127,127,.15); }
+        .rp-pos { width: 1.6em; text-align: right; opacity: .55; font-variant-numeric: tabular-nums; }
+        .rp-item img { width: 72px; height: 72px; object-fit: cover; border-radius: 4px; }
+        .rp-spacer { margin-left: auto; }
+        .rp-item button { width: auto; margin: 0 0 0 .3rem; padding: .25rem .6rem; }
+        #token { font-family: monospace; }
+    </style>
+</head>
+<body>
+    <main>
+        <hgroup>
+            <h1>🔀 Reorder Photos</h1>
+            <p>Change the order of the photos on one of your observations. This one writes to iNaturalist, so it needs your API token.</p>
+        </hgroup>
+
+        <nav>
+            <ul><li><a href="index.html">Home</a></li></ul>
+        </nav>
+
+        <details>
+            <summary>🔑 Set your API token</summary>
+            <p>
+                Log in to iNaturalist, then open your
+                <a href="https://www.inaturalist.org/users/api_token" target="_blank" rel="noopener">API token page</a>
+                and copy the value (the long <code>api_token</code> string — pasting the whole
+                <code>{"api_token":"…"}</code> is fine too). It stays in this browser tab, is sent only to
+                iNaturalist, and expires after about a day.
+            </p>
+            <input type="password" id="token" placeholder="Paste API token" autocomplete="off" spellcheck="false">
+            <label><input type="checkbox" id="remember"> Remember for this browser session</label>
+        </details>
+
+        <form id="form">
+            <fieldset role="group">
+                <input type="text" id="obs" placeholder="Observation ID or URL" aria-label="Observation">
+                <button id="loadBtn">Load photos</button>
+            </fieldset>
+            <small id="status"></small>
+        </form>
+
+        <ul id="list" class="rp-list"></ul>
+
+        <button id="saveBtn" disabled>Save new order</button>
+    </main>
+
+    <script type="module" src="../src/reorderPhotos.view.ts"></script>
+</body>
+</html>

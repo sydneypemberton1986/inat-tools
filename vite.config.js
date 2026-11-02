@@ -9,6 +9,6 @@ export default defineConfig({
     outDir: '../dist',
     emptyOutDir: true,
     // Multi-page: list every HTML entry (relative to root), including the home page.
-    rollupOptions: { input: ['index.html', 'rarest.html', 'tree.html', 'trending.html', 'grid_viewer.html', 'range_viewer.html', 'trip-report.html', 'missed-connections.html'] },
+    rollupOptions: { input: ['index.html', 'rarest.html', 'tree.html', 'trending.html', 'grid_viewer.html', 'range_viewer.html', 'trip-report.html', 'missed-connections.html', 'reorder-photos.html'] },
   },
 })
