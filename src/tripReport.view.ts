@@ -61,6 +61,15 @@ function el(tag: string, props: Record<string, unknown> = {}, ...children: (Node
 
 type TripRow = Awaited<ReturnType<typeof main>>['rows'][number];
 
+/** Chronological sort key: the OBSERVATION time (full ISO timestamp, or the
+ *  observation date when no time was recorded). Never created_at/updated_at —
+ *  upload/edit order scrambles the walking path when edited photos are added
+ *  later. Plain string compare on ISO timestamps is deterministic across
+ *  locales (unlike localeCompare). */
+function _obsTime(r: TripRow): string {
+  return r.time_observed_at ?? r.observed_on ?? '';
+}
+
 /** Display name: iNat's common name, capitalised the way its taxon pages are
  *  ("tall gramma" → "Tall Gramma", but "Nerve-ray" stays as-is), else the
  *  scientific name. Only the first letter of each space-separated word is
@@ -75,7 +84,7 @@ function renderSummary(summary: Awaited<ReturnType<typeof main>>['summary']) {
   summaryEl.replaceChildren(
     el('strong', {textContent: `${summary.total_observations} observations`}),
     ` · ${summary.unique_taxa} unique taxa · `,
-    el('span', {className: 'lifer-badge'}, el('span', {className: 'lifer-dot'}, '●'), ` ${summary.first_time_count} first-time sightings`),
+    el('span', {className: 'lifer-badge'}, el('span', {className: 'lifer-dot'}, '●'), ` ${summary.first_time_count} first-time species`),
     ` · ${summary.research_grade_count} research grade`,
   );
 }
@@ -97,10 +106,10 @@ function renderMap(rows: Awaited<ReturnType<typeof main>>['rows']) {
   }
   layerGroup!.clearLayers();
 
-  // Connect non-obscured observations in chronological order.
+  // Connect non-obscured observations in the order they were OBSERVED.
   const pathPoints = [...withCoords]
     .filter(r => r.geoprivacy !== 'obscured' && r.taxon_geoprivacy !== 'obscured')
-    .sort((a, b) => (a.time_observed_at ?? '').localeCompare(b.time_observed_at ?? ''))
+    .sort((a, b) => (_obsTime(a) < _obsTime(b) ? -1 : _obsTime(a) > _obsTime(b) ? 1 : 0))
     .map(r => r.coords);
 
   if (pathPoints.length > 1) {
