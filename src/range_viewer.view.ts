@@ -2,11 +2,11 @@
 //
 // For a chosen taxon we pull its direct children and overlay each in a distinct
 // color so their ranges are visually separable. Two data sources:
-//   * "Range polygons" — expert range tiles (tiles.inaturalist.org/v1/taxon_ranges),
+//   * "Range polygons" — expert range tiles (api.inaturalist.org/v2/taxon_ranges),
 //     which exist mainly at species level.
-//   * "Observations" — the community grid (api.inaturalist.org/v1/grid), which
+//   * "Observations" — the community grid (api.inaturalist.org/v2/grid), which
 //     reaches subspecies. Both are raster tiles that accept ?color= and CORS.
-// Taxon lookups (search, detail, bounds) go through the v2 JSON client in range.ts.
+// Taxon lookups (search, detail, bounds) go through the JSON client in range.ts.
 
 import {fetchBounds, fetchTaxon, searchTaxa, type Child, type Suggestion, type Taxon} from './range.ts';
 
@@ -14,11 +14,11 @@ import {fetchBounds, fetchTaxon, searchTaxa, type Child, type Suggestion, type T
 // bundling so `L` stays a runtime global but is fully checked.
 declare const L: typeof import('leaflet');
 
-const RANGE_TILE_URL = 'https://tiles.inaturalist.org/v1/taxon_ranges/{id}/{z}/{x}/{y}.png?color={color}';
-const GRID_TILE_URL = 'https://api.inaturalist.org/v1/grid/{z}/{x}/{y}.png?taxon_id={id}&color={color}';
+const RANGE_TILE_URL = 'https://api.inaturalist.org/v2/taxon_ranges/{id}/{z}/{x}/{y}.png?color={color}';
+const GRID_TILE_URL = 'https://api.inaturalist.org/v2/grid/{z}/{x}/{y}.png?taxon_id={id}&color={color}';
 // Observations of the parent with the colored children excluded — the "everyone
 // else" layer so capped-out taxa stay visible.
-const REMAINDER_TILE_URL = 'https://api.inaturalist.org/v1/grid/{z}/{x}/{y}.png?taxon_id={id}&without_taxon_id={exclude}&color={color}';
+const REMAINDER_TILE_URL = 'https://api.inaturalist.org/v2/grid/{z}/{x}/{y}.png?taxon_id={id}&without_taxon_id={exclude}&color={color}';
 const REMAINDER_COLOR = '#9aa0a6'; // pale grey: present but recessive under the colored taxa
 
 // Per-child colors in OKLCH: fixed lightness/chroma, hue spread evenly around the

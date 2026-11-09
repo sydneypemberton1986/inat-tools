@@ -99,7 +99,7 @@ function renderGrid(view: GridViewer): void {
   if (view.gridLayer) map.removeLayer(view.gridLayer);
   if (view.shadowLayer) { map.removeLayer(view.shadowLayer); view.shadowLayer = null; }
 
-  const tileUrl = `https://api.inaturalist.org/v1/grid/{z}/{x}/{y}.png?user_login=${encodeURIComponent(username)}&color=blue`;
+  const tileUrl = `https://api.inaturalist.org/v2/grid/{z}/{x}/{y}.png?user_login=${encodeURIComponent(username)}&color=blue`;
 
   const shadowZoom = nativeZoom - 1;
   if (shadowZoom >= 0) {
