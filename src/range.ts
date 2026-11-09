@@ -106,23 +106,17 @@ export async function fetchTaxon(id: number): Promise<Taxon | null> {
 }
 
 export async function fetchBounds(taxon_id: number): Promise<Bounds | null> {
-  const query = {
+  const response = await api.observations.observationsList({
     taxon_id: [taxon_id],
     per_page: 0,
     return_bounds: 'true'
-  };
-  const response = await api.observations.observationsList(query);
-  const totalBounds = (response.data as {total_bounds?: Partial<Bounds>}).total_bounds;
-  if (
-    totalBounds?.sw_latitude == null ||
-    totalBounds.sw_longitude == null ||
-    totalBounds.ne_latitude == null ||
-    totalBounds.ne_longitude == null
-  ) return null;
+  });
+  const {swlat, swlng, nelat, nelng} = response.data.total_bounds ?? {};
+  if (swlat == null || swlng == null || nelat == null || nelng == null) return null;
   return {
-    sw_latitude: totalBounds.sw_latitude,
-    sw_longitude: totalBounds.sw_longitude,
-    ne_latitude: totalBounds.ne_latitude,
-    ne_longitude: totalBounds.ne_longitude
+    sw_latitude: swlat,
+    sw_longitude: swlng,
+    ne_latitude: nelat,
+    ne_longitude: nelng
   };
 }
