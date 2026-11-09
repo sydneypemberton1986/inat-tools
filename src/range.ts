@@ -1,17 +1,6 @@
 import {createApi} from './api/client.ts';
 
-// A single throttled client for this page's JSON lookups (autocomplete, taxon
-// detail, observation bounds). The map's tile layers hit iNat's raster tile
-// services directly and don't go through here.
 const api = createApi();
-
-const SUMMARY_FIELDS = 'id,name,rank,preferred_common_name,observations_count,default_photo.square_url';
-const TAXON_FIELDS = [
-  'id', 'name', 'rank', 'preferred_common_name', 'default_photo.square_url',
-  'ancestors.id', 'ancestors.name', 'ancestors.rank',
-  'children.id', 'children.name', 'children.rank', 'children.is_active',
-  'children.observations_count', 'children.preferred_common_name', 'children.default_photo.square_url',
-].join(',');
 
 export interface Suggestion {
   id: number;
@@ -42,58 +31,98 @@ export interface Taxon {
   children: Child[];
 }
 
-export interface Bounds {
-  swlat: number;
-  swlng: number;
-  nelat: number;
-  nelng: number;
+export interface Bounds { 
+  sw_latitude: number;
+  sw_longitude: number;
+  ne_latitude: number;
+  ne_longitude: number;
 }
 
 /** Typeahead search — the same /taxa/autocomplete the iNat site uses. */
-export async function searchTaxa(q: string, perPage: number): Promise<Suggestion[]> {
-  const res = await api.taxa.autocompleteList({q, per_page: perPage, fields: SUMMARY_FIELDS});
-  return (res.data.results ?? []).flatMap(t => (t?.id == null ? [] : [{
-    id: t.id,
-    name: t.name ?? '',
-    rank: t.rank ?? '',
-    common: t.preferred_common_name ?? undefined,
-    photo: t.default_photo?.square_url ?? undefined,
-    observationsCount: t.observations_count ?? undefined,
+export async function searchTaxa(query: string, perPage: number): Promise<Suggestion[]> {
+  const summary_fields = [
+    'id',
+    'name',
+    'rank',
+    'preferred_common_name',
+    'observations_count',
+    'default_photo.square_url',
+  ];
+  const response = await api.taxa.autocompleteList({
+    q: query,
+    per_page: perPage,
+    fields: summary_fields.join(',')
+  });
+  return (response.data.results ?? []).flatMap(taxon => (taxon?.id == null ? [] : [{
+    id: taxon.id,
+    name: taxon.name ?? '',
+    rank: taxon.rank ?? '',
+    common: taxon.preferred_common_name ?? undefined,
+    photo: taxon.default_photo?.square_url ?? undefined,
+    observationsCount: taxon.observations_count ?? undefined,
   }]));
 }
 
 /** A taxon with its direct parent and active children (for the colored split). */
 export async function fetchTaxon(id: number): Promise<Taxon | null> {
-  const res = await api.taxa.taxaDetail([id], {fields: TAXON_FIELDS});
-  const t = res.data.results?.[0];
-  if (t?.id == null) return null;
-  const parent = t.ancestors?.at(-1);
+  const taxon_fields = [
+    'ancestors.id',
+    'ancestors.name',
+    'ancestors.rank',
+    'children.default_photo.square_url',
+    'children.id',
+    'children.is_active',
+    'children.name',
+    'children.observations_count',
+    'children.preferred_common_name',
+    'children.rank',
+    'default_photo.square_url',
+    'id',
+    'name',
+    'preferred_common_name',
+    'rank',
+  ]
+  const response = await api.taxa.taxaDetail([id], {fields: taxon_fields.join(',')});
+  const taxonDetail = response.data.results?.[0];
+  if (taxonDetail?.id == null) return null;
+  const parent = taxonDetail.ancestors?.at(-1);
   return {
-    id: t.id,
-    name: t.name ?? '',
-    rank: t.rank ?? '',
-    common: t.preferred_common_name ?? undefined,
-    photo: t.default_photo?.square_url ?? undefined,
+    id: taxonDetail.id,
+    name: taxonDetail.name ?? '',
+    rank: taxonDetail.rank ?? '',
+    common: taxonDetail.preferred_common_name ?? undefined,
+    photo: taxonDetail.default_photo?.square_url ?? undefined,
     parent: parent?.id == null ? undefined : {id: parent.id, name: parent.name ?? '', rank: parent.rank ?? ''},
-    children: (t.children ?? []).flatMap(c => (c?.id == null ? [] : [{
-      id: c.id,
-      name: c.name ?? '',
-      rank: c.rank ?? '',
-      common: c.preferred_common_name ?? undefined,
-      photo: c.default_photo?.square_url ?? undefined,
-      observationsCount: c.observations_count ?? 0,
-      isActive: c.is_active !== false,
+    children: (taxonDetail.children ?? []).flatMap(child => (child?.id == null ? [] : [{
+      id: child.id,
+      name: child.name ?? '',
+      rank: child.rank ?? '',
+      common: child.preferred_common_name ?? undefined,
+      photo: child.default_photo?.square_url ?? undefined,
+      observationsCount: child.observations_count ?? 0,
+      isActive: child.is_active !== false,
     }])),
   };
 }
 
-/** The bounding box of a taxon's observations, for fitting the map to it. */
-export async function fetchBounds(id: number): Promise<Bounds | null> {
-  // `return_bounds` / `total_bounds` aren't in the generated types; build the
-  // query as a variable (no excess-property check) and read the extra field.
-  const query = {taxon_id: [id], per_page: 0, return_bounds: 'true'};
-  const res = await api.observations.observationsList(query);
-  const b = (res.data as {total_bounds?: Partial<Bounds>}).total_bounds;
-  if (b?.swlat == null || b.swlng == null || b.nelat == null || b.nelng == null) return null;
-  return {swlat: b.swlat, swlng: b.swlng, nelat: b.nelat, nelng: b.nelng};
+export async function fetchBounds(taxon_id: number): Promise<Bounds | null> {
+  const query = {
+    taxon_id: [taxon_id],
+    per_page: 0,
+    return_bounds: 'true'
+  };
+  const response = await api.observations.observationsList(query);
+  const totalBounds = (response.data as {total_bounds?: Partial<Bounds>}).total_bounds;
+  if (
+    totalBounds?.sw_latitude == null ||
+    totalBounds.sw_longitude == null ||
+    totalBounds.ne_latitude == null ||
+    totalBounds.ne_longitude == null
+  ) return null;
+  return {
+    sw_latitude: totalBounds.sw_latitude,
+    sw_longitude: totalBounds.sw_longitude,
+    ne_latitude: totalBounds.ne_latitude,
+    ne_longitude: totalBounds.ne_longitude
+  };
 }

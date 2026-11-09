@@ -486,8 +486,8 @@ async function fitToTaxon(id: number) {
   try {
     const b = await fetchBounds(id);
     if (!b) return;
-    if (b.nelat - b.swlat > MAX_FIT_LAT_SPAN || b.nelng - b.swlng > MAX_FIT_LNG_SPAN) return;
-    map.fitBounds([[b.swlat, b.swlng], [b.nelat, b.nelng]], {padding: [20, 20]});
+    if (b.ne_latitude - b.sw_latitude > MAX_FIT_LAT_SPAN || b.ne_longitude - b.sw_longitude > MAX_FIT_LNG_SPAN) return;
+    map.fitBounds([[b.sw_latitude, b.sw_longitude], [b.ne_latitude, b.ne_longitude]], {padding: [20, 20]});
   } catch (err) {
     console.warn('bounds lookup failed', err); // non-fatal
   }
