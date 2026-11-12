@@ -533,6 +533,11 @@ export type ExemplarIdentification = {
   cached_votes_total?: number;
 } | null;
 
+export interface FeatureFlags {
+  flags: Record<string, boolean>;
+  experiments: Record<string, string | null>;
+}
+
 export interface IdSummaryReference {
   /** Unique auto-increment integer identifier for the reference. */
   id: number;
@@ -7313,6 +7318,35 @@ export class Api<
         format: "json",
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags Posts
+     * @name PostsDetail
+     * @summary Fetch a single published post
+     * @request GET:/posts/{id}
+     * @secure
+     */
+    postsDetail: (
+      id: string,
+      query?: {
+        /**
+         * Attribute fields to return in the response
+         * @example "title,user,body"
+         */
+        fields?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<ResultsPosts, Error>({
+        path: `/posts/${id}`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
   };
   places = {
     /**
@@ -13036,6 +13070,8 @@ export class Api<
          * @example "species_guess,observed_on"
          */
         fields?: any;
+        /** Include total_bounds of matching observations. Missing upstream: inaturalist/iNaturalistAPI openapi/schema/request/observations_search.js */
+        return_bounds?: "true" | "false";
       },
       params: RequestParams = {},
     ) =>

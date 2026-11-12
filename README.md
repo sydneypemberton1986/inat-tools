@@ -24,7 +24,7 @@ pnpm run dev
 
 pnpm add --save-dev swagger-typescript-api
 
-pnpm exec swagger-typescript-api generate --path https://api.inaturalist.org/v2/api-docs --output ./src/api --name inaturalist.ts
+pnpm generate:api
 
 pnpm add p-throttle
 
