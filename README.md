@@ -27,11 +27,16 @@ pnpm add --save-dev swagger-typescript-api
 pnpm generate:api
 
 pnpm add p-throttle
-
-npx tsx
 ```
+
+## Working in an Interactive Shell 
+
+```shell
+cd src && npx tsx
+```
+
 ```ts
-const { main, iNatApi } = await import('./src/rarest.ts')
+const { createApi } = await import('./api/client.ts');
 
 main()
 
